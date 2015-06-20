@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+  <meta charset="UTF-8">
+  <title></title>
+  <script src="three.js"></script>
+  <script src="TrackballControls.js"></script>
+  <script src="OBJLoader.js"></script>
+  <script src="Detector.js"></script>
+  <script src="dynamictexture.js"></script>
+  <!--<script src="http://mrdoob.github.com/three.js/examples/fonts/helvetiker_regular.typeface.js"></script>-->
+</head>
+<body>
+
+<script type="application/javascript">
+  var container;
+  var camera, scene, renderer;
+  var mouseX = 0, mouseY = 0;
+
+  var windowHalfX = window.innerWidth / 2;
+  var windowHalfY = window.innerHeight / 2;
+
+  init();
+  animate();
+
+  /*** Initialize ***/
+  function init() {
+    // This <div> will host the canvas for our scene.
+    container = document.createElement('div');
+    document.body.appendChild(container);
+
+    // You can adjust the cameras distance and set the FOV to something
+    // different than 45°. The last two values set the clippling plane.
+    camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 2000);
+    camera.position.z = 500;
+    camera.position.x = -300;
+//    camera.position.y = -100;
+
+    // These variables set the camera behaviour and sensitivity.
+    controls = new THREE.TrackballControls(camera);
+    controls.rotateSpeed = 5.0;
+    controls.zoomSpeed = 5;
+    controls.panSpeed = 2;
+    controls.noZoom = false;
+    controls.noPan = false;
+    controls.staticMoving = true;
+    controls.dynamicDampingFactor = 0.3;
+
+    // This is the scene we will add all objects to.
+    scene = new THREE.Scene();
+
+    // You can set the color of the ambient light to any value.
+    // I have chose a completely white light because I want to paint
+    // all the shading into my texture. You propably want something darker.
+    var ambient = new THREE.AmbientLight(0xffffff);
+    scene.add(ambient);
+
+    // Uncomment these lines to create a simple directional light.
+    // var directionalLight = new THREE.DirectionalLight( 0xffeedd );
+    // directionalLight.position.set( 0, 0, 1 ).normalize();
+    // scene.add( directionalLight );
+
+    /*** Texture Loading ***/
+    var manager = new THREE.LoadingManager();
+    manager.onProgress = function (item, loaded, total) {
+      console.log(item, loaded, total);
+    };
+    var texture = new THREE.Texture();
+    var loader = new THREE.ImageLoader(manager);
+
+    // You can set the texture properties in this function.
+    // The string has to be the path to your texture file.
+//    loader.load('female_croupier_2013-04-11.png', function (image) {
+//      texture.image = image;
+//      texture.needsUpdate = true;
+//      // I wanted a nearest neighbour filtering for my low-poly character,
+//      // so that every pixel is crips and sharp. You can delete this lines
+//      // if have a larger texture and want a smooth linear filter.
+//      texture.magFilter = THREE.NearestFilter;
+//      texture.minFilter = THREE.NearestMipMapLinearFilter;
+//    });
+
+    /*** OBJ Loading ***/
+    var loader = new THREE.OBJLoader(manager);
+
+    function createLabel(text, x, y, z, size, color, backGroundColor, backgroundMargin) {
+      if (!backgroundMargin)
+        backgroundMargin = 50;
+
+      var canvas = document.createElement("canvas");
+      document.body.appendChild(canvas);
+
+      var context = canvas.getContext("2d");
+      context.font = size + "pt Arial";
+
+      var textWidth = context.measureText(text).width;
+
+      canvas.width = textWidth + backgroundMargin;
+      canvas.height = size + backgroundMargin;
+      canvas.width = 128;
+      canvas.height = 128;
+      context = canvas.getContext("2d");
+      context.font = size + "pt Arial";
+
+      if (backGroundColor) {
+        context.fillStyle = backGroundColor;
+//        context.fillRect(canvas.width / 2 - textWidth / 2 - backgroundMargin / 2, canvas.height / 2 - size / 2 - +backgroundMargin / 2, textWidth + backgroundMargin, size + backgroundMargin);
+        context.fillRect(0, 0, canvas.width, canvas.height);
+      }
+
+      context.strokeStyle = 'black';
+
+      context.beginPath();
+      for (var x1 = 0; x1 < canvas.width; x1 += 4) {
+        context.moveTo(x1, 0);
+        context.lineTo(x1 + canvas.height, canvas.height)
+      }
+      for (var y1 = 0; y1 < canvas.height; y1 += 4) {
+        context.moveTo(0, y1);
+        context.lineTo(canvas.width, y1 + canvas.width)
+      }
+      context.stroke();
+
+      context.textAlign = "center";
+      context.textBaseline = "middle";
+      context.fillStyle = 'black';
+      context.strokeText(text, canvas.width / 2, canvas.height / 2);
+      context.fillText(text, canvas.width / 2, canvas.height / 2);
+
+      // context.strokeStyle = "black";
+      // context.strokeRect(0, 0, canvas.width, canvas.height);
+
+      var texture = new THREE.Texture(canvas);
+      texture.needsUpdate = true;
+      texture.repeat = new THREE.Vector2(2, 2);
+      texture.offset = new THREE.Vector2(0.1, 0.1);
+//      texture.wrapS = THREE.RepeatWrapping;
+//      texture.wrapT = THREE.RepeatWrapping;
+//      texture.minFilter = THREE.LinearFilter;
+//      texture.mapping = THREE.CubeRefractionMapping;
+
+
+      var material = new THREE.MeshBasicMaterial({
+        map : texture
+      });
+      material.side = THREE.DoubleSide;
+
+      var mesh = new THREE.Mesh(new THREE.PlaneGeometry(canvas.width, canvas.height), material);
+      // mesh.overdraw = true;
+      mesh.doubleSided = true;
+      mesh.position.x = x - canvas.width;
+      mesh.position.y = y - canvas.height;
+      mesh.position.z = z;
+      scene.add(mesh);
+
+//      return mesh;
+
+
+      return texture;
+
+//      var material = new THREE.MeshBasicMaterial({
+//        map : texture
+//      });
+//
+//      var mesh = new THREE.Mesh(new THREE.PlaneGeometry(canvas.width, canvas.height), material);
+//      // mesh.overdraw = true;
+//      mesh.doubleSided = true;
+//      mesh.position.x = x - canvas.width;
+//      mesh.position.y = y - canvas.height;
+//      mesh.position.z = z;
+//
+//      return mesh;
+    }
+
+    var panels = {};
+
+    // As soon as the OBJ has been loaded this function looks for a mesh
+    // inside the data and applies the texture to it.
+    loader.load('/model.obj', function (event) {
+      var object = event;
+      console.log(object);
+
+      var centroid = new THREE.Vector3();
+      var vertexCount = 0;
+
+      object.traverse(function (child) {
+//        console.log(child);
+        function randomColor() {
+          var hexPart = '000000' + Math.floor(Math.random() * 16777215).toString(16);
+          return '#' + hexPart.substr(hexPart.length - 6);
+        }
+
+        if (child instanceof THREE.Mesh) {
+//          child.material.map = texture;
+
+//          var dynamicTexture  = new THREEx.DynamicTexture(512,512);
+
+          var panelColor = randomColor();
+
+          child.material = new THREE.MeshBasicMaterial({
+//            color: panelColor,
+            map: createLabel(child.name, 0, 0, 0, 10, "0x003300", panelColor)
+//            map: dynamicTexture.texture
+          });
+          child.material.side = THREE.DoubleSide;
+
+          child.geometry = new THREE.Geometry().fromBufferGeometry(child.geometry);
+
+          for (var i = 0; i < child.geometry.vertices.length; i++) {
+            centroid.add(child.geometry.vertices[i]);
+            vertexCount++;
+          }
+
+          if (panels[child.name]) {
+            console.log("Huh! We already have a " + child.name + "!")
+          }
+          panels[child.name] = child;
+
+//          var faces = child.geometry.faces;
+//          for (var face in faces) {
+//            console.log(face);
+//          }
+        }
+      });
+
+      // My initial model was too small, so I scaled it upwards.
+//      object.scale = new THREE.Vector3(25, 25, 25);
+
+      // You can change the position of the object, so that it is not
+      // centered in the view and leaves some space for overlay text.
+
+      centroid.divideScalar(vertexCount);
+
+      object.position.x = 0 - centroid.x / 2;
+      object.position.y = 0 - centroid.y / 2;
+      object.position.z = 0 - centroid.z;
+
+      scene.add(object);
+    });
+
+
+    // We set the renderer to the size of the window and
+    // append a canvas to our HTML page.
+    renderer = new THREE.WebGLRenderer();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    container.appendChild(renderer.domElement);
+  }
+
+  /*** The Loop ***/
+  function animate() {
+    // This function calls itself on every frame. You can for example change
+    // the objects rotation on every call to create a turntable animation.
+    requestAnimationFrame(animate);
+
+    // On every frame we need to calculate the new camera position
+    // and have it look exactly at the center of our scene.
+    controls.update();
+    camera.lookAt(scene.position);
+    renderer.render(scene, camera);
+  }
+</script>
+</body>
+</html>
