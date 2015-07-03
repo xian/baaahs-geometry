@@ -96,7 +96,7 @@ private fun read(file: File): Model {
         "#" -> {
         }
 
-        "g" -> {
+        "o" -> {
           addGroup()
           curGroupName = words.join(" ")
         }

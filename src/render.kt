@@ -146,7 +146,8 @@ class SideProjection(val model: Model, val near: Boolean) : Projection {
   }
 
   override fun distance(vertex: Vertex): Double {
-    return (vertex.z - modelMin.z) / modelAbs.z
+    val dist = if (near) vertex.z - modelMin.z else modelMax.z - vertex.z
+    return dist / modelAbs.z
   }
 
   override fun isVisible(vertex: Vertex): Boolean {

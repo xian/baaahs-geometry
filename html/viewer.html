@@ -91,7 +91,8 @@
       document.body.appendChild(canvas);
 
       var context = canvas.getContext("2d");
-      context.font = size + "pt Arial";
+//      context.font = size + "pt Arial";
+      context.font = "36pt Arial";
 
       var textWidth = context.measureText(text).width;
 
@@ -108,17 +109,35 @@
         context.fillRect(0, 0, canvas.width, canvas.height);
       }
 
-      context.strokeStyle = 'black';
+//      context.fillStyle = 'orange';
+//      context.fillRect(6, 57, 6, 57);
+//      context.fillRect(8, 8, 64, 64);
+//      context.fillRect(0, 0, 1, 1);
+
+      context.strokeStyle = 'orange';
 
       context.beginPath();
-      for (var x1 = 0; x1 < canvas.width; x1 += 4) {
-        context.moveTo(x1, 0);
-        context.lineTo(x1 + canvas.height, canvas.height)
-      }
-      for (var y1 = 0; y1 < canvas.height; y1 += 4) {
-        context.moveTo(0, y1);
-        context.lineTo(canvas.width, y1 + canvas.width)
-      }
+      context.moveTo(0, 0);
+      context.lineTo(canvas.width, canvas.height);
+      context.moveTo(canvas.width, 0);
+      context.lineTo(0, canvas.height);
+
+      context.moveTo(0, 0);
+      context.lineTo(canvas.width - 1, 0);
+      context.lineTo(canvas.width - 1, canvas.height - 1);
+      context.lineTo(0, canvas.height - 1);
+      context.lineTo(0, 0);
+
+//      for (var x1 = 0; x1 < canvas.width; x1 += 4) {
+//        context.moveTo(x1, 0);
+//        context.lineTo(x1, canvas.height);
+////        context.lineTo(x1 + canvas.height, canvas.height)
+//      }
+//      for (var y1 = 0; y1 < canvas.height; y1 += 4) {
+//        context.moveTo(0, y1);
+//        context.lineTo(canvas.width, y1);
+////        context.lineTo(canvas.width, y1 + canvas.width)
+//      }
       context.stroke();
 
       context.textAlign = "center";
@@ -126,32 +145,25 @@
       context.fillStyle = 'black';
       context.strokeText(text, canvas.width / 2, canvas.height / 2);
       context.fillText(text, canvas.width / 2, canvas.height / 2);
+//      context.strokeText(text, 0, 0);
+//      context.fillText(text, 0, 0);
+//      context.strokeText(text, 10, 10);
+//      context.fillText(text, 10, 10);
+//      context.strokeText(text, 64, 10);
+//      context.fillText(text, 64, 10);
 
       // context.strokeStyle = "black";
       // context.strokeRect(0, 0, canvas.width, canvas.height);
 
       var texture = new THREE.Texture(canvas);
       texture.needsUpdate = true;
-      texture.repeat = new THREE.Vector2(2, 2);
-      texture.offset = new THREE.Vector2(0.1, 0.1);
-//      texture.wrapS = THREE.RepeatWrapping;
-//      texture.wrapT = THREE.RepeatWrapping;
-//      texture.minFilter = THREE.LinearFilter;
-//      texture.mapping = THREE.CubeRefractionMapping;
+//      texture.repeat = new THREE.Vector2(1, 1);
+//      texture.offset = new THREE.Vector2(0.1, 0.1);
+//      texture.wrapS = THREE.ClampToEdgeWrapping;
+//      texture.wrapT = THREE.ClampToEdgeWrapping;
+//      texture.minFilter = THREE.NearestMipMapNearestFilter;
+//      texture.mapping = THREE.CubeReflectionMapping;
 
-
-      var material = new THREE.MeshBasicMaterial({
-        map : texture
-      });
-      material.side = THREE.DoubleSide;
-
-      var mesh = new THREE.Mesh(new THREE.PlaneGeometry(canvas.width, canvas.height), material);
-      // mesh.overdraw = true;
-      mesh.doubleSided = true;
-      mesh.position.x = x - canvas.width;
-      mesh.position.y = y - canvas.height;
-      mesh.position.z = z;
-      scene.add(mesh);
 
 //      return mesh;
 
@@ -173,6 +185,7 @@
     }
 
     var panels = {};
+    document.panels = panels;
 
     // As soon as the OBJ has been loaded this function looks for a mesh
     // inside the data and applies the texture to it.
@@ -187,6 +200,7 @@
 //        console.log(child);
         function randomColor() {
           var hexPart = '000000' + Math.floor(Math.random() * 16777215).toString(16);
+//          var hexPart = '000000' + Math.floor(Math.random() * 65536).toString(16);
           return '#' + hexPart.substr(hexPart.length - 6);
         }
 
@@ -206,10 +220,89 @@
 
           child.geometry = new THREE.Geometry().fromBufferGeometry(child.geometry);
 
+//          child.geometry.faceVertexUvs = [
+//            new THREE.Vector2(0, .666),
+//            new THREE.Vector2(.5, .666),
+//            new THREE.Vector2(.5, 1),
+//            new THREE.Vector2(0, 1)
+//          ];
+
+          child.geometry.computeFaceNormals();
+//          child.geometry.computeVertexNormals();
+//          child.geometry.center();
+
+//          var material = new THREE.MeshBasicMaterial({
+//            map : texture
+//          });
+//          material.side = THREE.DoubleSide;
+//
+//          var mesh = new THREE.Mesh(new THREE.PlaneGeometry(canvas.width, canvas.height), material);
+//          // mesh.overdraw = true;
+//          mesh.doubleSided = true;
+//          mesh.position.x = x - canvas.width;
+//          mesh.position.y = y - canvas.height;
+//          mesh.position.z = z;
+//          scene.add(mesh);
+
+
+
+
+
           for (var i = 0; i < child.geometry.vertices.length; i++) {
             centroid.add(child.geometry.vertices[i]);
             vertexCount++;
           }
+
+          var normalizeFace = function(geometry, face) {
+            var v1 = geometry.vertices[face.a];
+            var v2 = geometry.vertices[face.b];
+            var v3 = geometry.vertices[face.c];
+
+            var vt2 = new THREE.Vector3()
+          };
+
+          var assignUVs = function( geometry ){
+            geometry.computeBoundingBox();
+            geometry.computeFaceNormals();
+
+            var max     = geometry.boundingBox.max;
+            var min     = geometry.boundingBox.min;
+
+            var offset  = new THREE.Vector2(0 - min.x, 0 - min.y);
+            var range   = new THREE.Vector2(max.x - min.x, max.y - min.y);
+
+            geometry.faceVertexUvs[0] = [];
+            var faces = geometry.faces;
+
+            for (i = 0; i < geometry.faces.length ; i++) {
+              var face = faces[i];
+              var v1 = geometry.vertices[face.a];
+              var v2 = geometry.vertices[face.b];
+              var v3 = geometry.vertices[face.c];
+
+              geometry.faceVertexUvs[0].push([
+                new THREE.Vector2( ( v1.x + offset.x ) / range.x , ( v1.y + offset.y ) / range.y ),
+                new THREE.Vector2( ( v2.x + offset.x ) / range.x , ( v2.y + offset.y ) / range.y ),
+                new THREE.Vector2( ( v3.x + offset.x ) / range.x , ( v3.y + offset.y ) / range.y )
+              ]);
+
+            }
+
+            geometry.uvsNeedUpdate = true;
+          };
+
+          assignUVs(child.geometry);
+
+
+//          child.geometry.faceVertexUvs = [[]];
+//          for (var i = 0; i < child.geometry.faces.length; i++) {
+//            child.geometry.faceVertexUvs[0].push(
+//              [new THREE.Vector2(1, 0), new THREE.Vector2(0, 1), new THREE.Vector2(0, 0)]
+//            );
+//          }
+//
+//          child.geometry.computeVertexNormals();
+//          child.geometry.computeFaceNormals();
 
           if (panels[child.name]) {
             console.log("Huh! We already have a " + child.name + "!")
@@ -238,11 +331,42 @@
       scene.add(object);
     });
 
+//    var texture = createLabel("Label", 0, 0, 0, 10, "0x003300", "orange");
+//    var material = new THREE.MeshBasicMaterial({
+//      map : texture,
+////      color: "white"
+//    });
+//    material.side = THREE.DoubleSide;
+
+//    var mesh = new THREE.Mesh(new THREE.PlaneGeometry(canvas.width, canvas.height), material);
+//    // mesh.overdraw = true;
+//    mesh.doubleSided = true;
+//    mesh.position.x = x - canvas.width;
+//    mesh.position.y = y - canvas.height;
+//    mesh.position.z = z;
+//    scene.add(mesh);
+
+
+//    var geom = new THREE.Geometry();
+//    geom.vertices.push(new THREE.Vector3(100, 100, 0));
+//    geom.vertices.push(new THREE.Vector3(300, 100, 0));
+//    geom.vertices.push(new THREE.Vector3(300, 300, 0));
+//    geom.faces.push(new THREE.Face3(0, 1, 2));
+//    console.log('faceVertexUvs', geom.faceVertexUvs);
+//    geom.faceVertexUvs[0] = [
+//      [new THREE.Vector2(0, 0), new THREE.Vector2(1, 0), new THREE.Vector2(1, 1)]
+//    ];
+////    geom.computeFaceNormals();
+////    sphere.computeCentroids();
+////    geom.computeVertexNormals();
+////    geom.computeTangents();
+//    var geomMesh = new THREE.Mesh(geom, material);
+//    scene.add(geomMesh);
 
     // We set the renderer to the size of the window and
     // append a canvas to our HTML page.
     renderer = new THREE.WebGLRenderer();
-    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setSize(window.innerWidth, window.innerHeight - 10);
     container.appendChild(renderer.domElement);
   }
 
