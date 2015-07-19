@@ -33,6 +33,12 @@ fun main(args: Array<String>) {
     view = ModelView(model, projection)
     frame.add(view, BorderLayout.CENTER)
     frame.validate()
+
+
+    val sheep = Sheep(model)
+    val csv = CSV(File("panel-edges.csv"))
+    EdgeCalculator(sheep).dumpEdges(csv)
+    csv.close()
   }
 
   refreshView()
@@ -60,7 +66,7 @@ fun main(args: Array<String>) {
   controls.add(topButton)
 
   val perspectiveButton = Button("Perspective")
-  perspectiveButton.addActionListener({ event -> pickProjection = { PerspectiveProjection(it, Vertex(15.0, 15.0, 100.0)) }; refreshView() })
+  perspectiveButton.addActionListener({ event -> pickProjection = { PerspectiveProjection(it, Vertex(-150.0, 15.0, 100.0)) }; refreshView() })
   controls.add(perspectiveButton)
 
   val nearButton = Button("Near")
@@ -72,11 +78,6 @@ fun main(args: Array<String>) {
   controls.add(farButton)
 
   frame.add(controls, BorderLayout.SOUTH)
-
-  val sheep = Sheep(model)
-  val csv = CSV(File("panel-edges.csv"))
-  EdgeCalculator(sheep).dumpEdges(csv)
-  csv.close()
 }
 
 interface Projection {
