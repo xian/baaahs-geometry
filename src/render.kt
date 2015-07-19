@@ -1,12 +1,14 @@
+import javafx.geometry.Point3D
 import java.awt.*
 import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
 import java.awt.geom.Point2D
 import java.io.File
+import java.io.FileWriter
 import java.util.*
 
 fun main(args: Array<String>) {
-  val file = File("/Users/xian/IdeaProjects/baaahs-labels/model.obj")
+  val file = File("./model.obj")
 
   //  println("${model.faces.size()} faces: ${model.faces}")
 
@@ -70,6 +72,11 @@ fun main(args: Array<String>) {
   controls.add(farButton)
 
   frame.add(controls, BorderLayout.SOUTH)
+
+  val sheep = Sheep(model)
+  val csv = CSV(File("panel-edges.csv"))
+  EdgeCalculator(sheep).dumpEdges(csv)
+  csv.close()
 }
 
 interface Projection {
@@ -221,7 +228,7 @@ class ModelView(val model: Model, val projection: Projection) : Component() {
 
     val drawables = ArrayList<Drawable>()
 
-    model.groups.forEach { group ->
+    model.objs.forEach { group ->
       val groupColor = Color(rand(), rand(), rand())
 
       var nearest = Double.MAX_VALUE
@@ -254,17 +261,17 @@ class ModelView(val model: Model, val projection: Projection) : Component() {
         }))
       }
 
-//      if (projection.isVisible(group.center())) {
-        drawables.add(Drawable(nearest - 0.00001, {
-          g.setFont(groupFont)
+      //      if (projection.isVisible(group.center())) {
+      drawables.add(Drawable(nearest - 0.00001, {
+        g.setFont(groupFont)
 
-          g.setColor(Color.BLACK)
-          val center = projection.project(group.center())
-          g.drawString(group.label,
-              tX(center) - groupFontFM.stringWidth(group.label) / 2,
-              tY(center) - groupFontFM.getHeight() / 2)
-        }))
-//      }
+        g.setColor(Color.BLACK)
+        val center = projection.project(group.center())
+        g.drawString(group.label,
+            tX(center) - groupFontFM.stringWidth(group.label) / 2,
+            tY(center) - groupFontFM.getHeight() / 2)
+      }))
+      //      }
     }
 
     drawables.sortBy { 0 - it.distance }.forEach { it.runnable() }

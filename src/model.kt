@@ -3,7 +3,7 @@ import java.io.File
 import java.text.ParseException
 import java.util.*
 
-data class Vertex(val x: Double, val y: Double, val z: Double, val lineNumber: Int? = null) {
+data class Vertex(val x: Double, val y: Double, val z: Double, transient val lineNumber: Int? = null) {
   companion object {
     val ORIGIN = Vertex(0.0, 0.0, 0.0)
   }
@@ -11,9 +11,16 @@ data class Vertex(val x: Double, val y: Double, val z: Double, val lineNumber: I
   fun plus(other: Vertex) = Vertex(x + other.x, y + other.y, z + other.z)
   fun minus(other: Vertex) = Vertex(x - other.x, y - other.y, z - other.z)
   fun div(divisor: Double) = Vertex(x / divisor, y / divisor, z / divisor)
+
+  fun distance(other: Vertex): Double {
+    val xD = other.x - x
+    val yD = other.y - y
+    val zD = other.z - z
+    return Math.sqrt(xD * xD + yD * yD + zD * zD)
+  }
 }
 
-data class Face(val vertices: List<Vertex>, val lineNumber: Int? = null) {
+data class Face(val vertices: List<Vertex>, transient val lineNumber: Int? = null) {
   fun center(): Vertex {
     var c = Vertex.ORIGIN
     vertices.forEach { c += it }
@@ -21,7 +28,7 @@ data class Face(val vertices: List<Vertex>, val lineNumber: Int? = null) {
   }
 }
 
-data class Group(val label: String, val faces: List<Face>) {
+data class Obj(val label: String, val faces: List<Face>) {
   fun center(): Vertex {
     var c = Vertex.ORIGIN
     faces.forEach { c += it.center() }
@@ -29,14 +36,14 @@ data class Group(val label: String, val faces: List<Face>) {
   }
 }
 
-data class Model(val groups: List<Group>) {
+data class Model(val objs: List<Obj>) {
   fun min(): Vertex {
     var x = Double.MAX_VALUE
     var y = Double.MAX_VALUE
     var z = Double.MAX_VALUE
 
-    groups.forEach { group ->
-      group.faces.forEach { face ->
+    objs.forEach { obj ->
+      obj.faces.forEach { face ->
         face.vertices.forEach { vertex ->
           if (vertex.x < x) x = vertex.x
           if (vertex.y < y) y = vertex.y
@@ -52,8 +59,8 @@ data class Model(val groups: List<Group>) {
     var y = Double.MIN_VALUE
     var z = Double.MIN_VALUE
 
-    groups.forEach { group ->
-      group.faces.forEach { face ->
+    objs.forEach { obj ->
+      obj.faces.forEach { face ->
         face.vertices.forEach { vertex ->
           if (vertex.x > x) x = vertex.x
           if (vertex.y > y) y = vertex.y
@@ -68,12 +75,12 @@ data class Model(val groups: List<Group>) {
 private fun read(file: File): Model {
   val vertices = ArrayList<Vertex>()
   val faces = ArrayList<Face>()
-  val groups = ArrayList<Group>()
-  var curGroupName = ""
+  val objs = ArrayList<Obj>()
+  var curObjName = ""
 
-  fun addGroup() {
+  fun addObj() {
     if (faces.isNotEmpty()) {
-      groups.add(Group(curGroupName, ArrayList(faces)))
+      objs.add(Obj(curObjName, ArrayList(faces)))
       faces.clear()
     }
   }
@@ -97,8 +104,8 @@ private fun read(file: File): Model {
         }
 
         "o" -> {
-          addGroup()
-          curGroupName = words.join(" ")
+          addObj()
+          curObjName = words.join(" ")
         }
 
         "v" -> {
@@ -127,7 +134,7 @@ private fun read(file: File): Model {
     }
   }
 
-  addGroup()
+  addObj()
 
-  return Model(groups)
+  return Model(objs)
 }
