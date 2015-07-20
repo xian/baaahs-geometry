@@ -1,7 +1,6 @@
 import javafx.geometry.Point3D
 import java.awt.*
-import java.awt.event.WindowAdapter
-import java.awt.event.WindowEvent
+import java.awt.event.*
 import java.awt.geom.Point2D
 import java.io.File
 import java.io.FileWriter
@@ -15,6 +14,8 @@ fun main(args: Array<String>) {
   var near = true
   var pickProjection: (Model) -> Projection = { FrontProjection(it, near) }
 
+  var perspectiveEyePosition = Vertex(-150.0, -15.0, 100.0)
+
   val frame = Frame(file.name)
   frame.setSize(600, 600)
   frame.setVisible(true)
@@ -22,6 +23,13 @@ fun main(args: Array<String>) {
 
   var model = read(file)
   var view: ModelView? = null
+
+  fun dumpEdges() {
+    val sheep = Sheep(model)
+    val csv = CSV(File("panel-edges.csv"))
+    EdgeCalculator(sheep).dumpEdges(csv)
+    csv.close()
+  }
 
   fun refreshView() {
     if (view != null) {
@@ -33,12 +41,6 @@ fun main(args: Array<String>) {
     view = ModelView(model, projection)
     frame.add(view, BorderLayout.CENTER)
     frame.validate()
-
-
-    val sheep = Sheep(model)
-    val csv = CSV(File("panel-edges.csv"))
-    EdgeCalculator(sheep).dumpEdges(csv)
-    csv.close()
   }
 
   refreshView()
@@ -47,7 +49,21 @@ fun main(args: Array<String>) {
     override fun windowGainedFocus(e: WindowEvent?) {
       model = read(file)
       refreshView()
+
+      dumpEdges()
     }
+  })
+
+  frame.addMouseWheelListener(MouseWheelListener { e ->
+    perspectiveEyePosition = Vertex(
+        perspectiveEyePosition.x + if (!e.isAltDown() && !e.isMetaDown()) e.getPreciseWheelRotation() else 0.0,
+        perspectiveEyePosition.y + if (e.isMetaDown()) e.getPreciseWheelRotation() else 0.0,
+        perspectiveEyePosition.z + if (e.isAltDown()) e.getPreciseWheelRotation() else 0.0)
+
+    println(perspectiveEyePosition)
+
+    pickProjection = { PerspectiveProjection(it, perspectiveEyePosition) }
+    refreshView()
   })
 
   val controls = Container()
@@ -66,7 +82,7 @@ fun main(args: Array<String>) {
   controls.add(topButton)
 
   val perspectiveButton = Button("Perspective")
-  perspectiveButton.addActionListener({ event -> pickProjection = { PerspectiveProjection(it, Vertex(-150.0, 15.0, 100.0)) }; refreshView() })
+  perspectiveButton.addActionListener({ event -> pickProjection = { PerspectiveProjection(it, perspectiveEyePosition) }; refreshView() })
   controls.add(perspectiveButton)
 
   val nearButton = Button("Near")
