@@ -268,11 +268,17 @@
             var max     = geometry.boundingBox.max;
             var min     = geometry.boundingBox.min;
 
-            var offset  = new THREE.Vector2(0 - min.x, 0 - min.y);
-            var range   = new THREE.Vector2(max.x - min.x, max.y - min.y);
+            var offset  = new THREE.Vector2(0 - min.z, 0 - min.y);
+            var range   = new THREE.Vector2(max.z - min.z, max.y - min.y);
 
             geometry.faceVertexUvs[0] = [];
             var faces = geometry.faces;
+
+            var avgNormal = new THREE.Vector3(0, 0, 0);
+            for (i = 0; i < geometry.faces.length ; i++) {
+              avgNormal.add(geometry.faces[i].normal);
+            }
+            avgNormal.divideScalar(geometry.faces.length);
 
             for (i = 0; i < geometry.faces.length ; i++) {
               var face = faces[i];
@@ -281,9 +287,9 @@
               var v3 = geometry.vertices[face.c];
 
               geometry.faceVertexUvs[0].push([
-                new THREE.Vector2( ( v1.x + offset.x ) / range.x , ( v1.y + offset.y ) / range.y ),
-                new THREE.Vector2( ( v2.x + offset.x ) / range.x , ( v2.y + offset.y ) / range.y ),
-                new THREE.Vector2( ( v3.x + offset.x ) / range.x , ( v3.y + offset.y ) / range.y )
+                new THREE.Vector2( ( v1.z + offset.x ) / range.x , ( v1.y + offset.y ) / range.y ),
+                new THREE.Vector2( ( v2.z + offset.x ) / range.x , ( v2.y + offset.y ) / range.y ),
+                new THREE.Vector2( ( v3.z + offset.x ) / range.x , ( v3.y + offset.y ) / range.y )
               ]);
 
             }
@@ -292,6 +298,7 @@
           };
 
           assignUVs(child.geometry);
+          console.log(child.name, child.geometry.vertices.length, child.geometry.faces.length);
 
 
 //          child.geometry.faceVertexUvs = [[]];
