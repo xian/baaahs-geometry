@@ -189,9 +189,7 @@
 
     // As soon as the OBJ has been loaded this function looks for a mesh
     // inside the data and applies the texture to it.
-    var modelUrl = 'model.obj';
-    if (document.location.hostname.indexOf("github") != 0) modelUrl = '../' + modelUrl;
-    loader.load(modelUrl, function (event) {
+    loader.load('model.obj', function (event) {
       var object = event;
       console.log(object);
 
@@ -273,6 +271,9 @@
             var offset  = new THREE.Vector2(0 - min.z, 0 - min.y);
             var range   = new THREE.Vector2(max.z - min.z, max.y - min.y);
 
+            var offset3 = new THREE.Vector3().sub(min);
+            var range3 = max.clone().sub(min);
+
             geometry.faceVertexUvs[0] = [];
             var faces = geometry.faces;
 
@@ -281,17 +282,24 @@
               avgNormal.add(geometry.faces[i].normal);
             }
             avgNormal.divideScalar(geometry.faces.length);
+            avgNormal.divideScalar(avgNormal.distanceTo(new THREE.Vector3()));
+            var q = new THREE.Quaternion();
+            q.setFromUnitVectors(avgNormal, new THREE.Vector3(0, 0, -1));
 
             for (i = 0; i < geometry.faces.length ; i++) {
               var face = faces[i];
-              var v1 = geometry.vertices[face.a];
-              var v2 = geometry.vertices[face.b];
-              var v3 = geometry.vertices[face.c];
+              var v1 = geometry.vertices[face.a].clone();
+              var v2 = geometry.vertices[face.b].clone();
+              var v3 = geometry.vertices[face.c].clone();
+
+              v1.applyQuaternion(q);
+              v2.applyQuaternion(q);
+              v3.applyQuaternion(q);
 
               geometry.faceVertexUvs[0].push([
-                new THREE.Vector2( ( v1.z + offset.x ) / range.x , ( v1.y + offset.y ) / range.y ),
-                new THREE.Vector2( ( v2.z + offset.x ) / range.x , ( v2.y + offset.y ) / range.y ),
-                new THREE.Vector2( ( v3.z + offset.x ) / range.x , ( v3.y + offset.y ) / range.y )
+                new THREE.Vector2( ( v1.x + offset.x ) / range.x , ( v1.y + offset.y ) / range.y ),
+                new THREE.Vector2( ( v2.x + offset.x ) / range.x , ( v2.y + offset.y ) / range.y ),
+                new THREE.Vector2( ( v3.x + offset.x ) / range.x , ( v3.y + offset.y ) / range.y )
               ]);
 
             }
@@ -299,7 +307,9 @@
             geometry.uvsNeedUpdate = true;
           };
 
-          assignUVs(child.geometry);
+          //if (child.name == '8P')
+            assignUVs(child.geometry);
+
           console.log(child.name, child.geometry.vertices.length, child.geometry.faces.length);
 
 
